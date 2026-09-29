@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PinkSlip-9000 | Global Automation Apocalypse Matrix</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Material+Symbols+Outlined">
+<style>
+  :root {
+    --bg-dark: #090d16;
+    --panel-bg: rgba(13, 20, 36, 0.85);
+    --panel-border: #1e293b;
+    --accent-red: #ff3366;
+    --accent-amber: #f59e0b;
+    --accent-cyan: #06b6d4;
+    --accent-neon: #10b981;
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --glow: 0 0 20px rgba(255, 51, 102, 0.35);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* Main Container: Map (Primary) + Chat (Secondary) */
+  #main-viewport {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(circle at 50% 50%, #111a2e 0%, #060911 100%);
+  }
+
+  /* Top HUD */
+  #hud-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.9rem 1.5rem;
+    background: var(--panel-bg);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--panel-border);
+    z-index: 10;
+  }
+  .hud-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .hud-badge {
+    background: var(--accent-red);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    animation: pulse 2s infinite ease-in-out;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+  .hud-title h1 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #fff;
+  }
+  .hud-stats {
+    display: flex;
+    gap: 1.5rem;
+  }
+  .stat-pill {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .stat-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .stat-value {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--accent-cyan);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Map Canvas Area */
+  #map-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+  }
+  #map-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+  }
+  #map-canvas.grabbing {
+    cursor: grabbing !important;
+  }
+  .map-controls {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    z-index: 15;
+  }
+  .map-btn {
+    background: rgba(13, 20, 36, 0.85);
+    border: 1px solid var(--panel-border);
+    color: var(--text-main);
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    font-weight: 700;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s;
+    user-select: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .map-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: var(--accent-cyan);
+    color: #fff;
+    transform: scale(1.05);
+  }
+  .map-hint-badge {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    background: rgba(13, 20, 36, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  /* Timeline & Controls Bar */
+  #timeline-bar {
+    padding: 1rem 1.5rem 1.2rem;
+    background: var(--panel-bg);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--panel-border);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .timeline-era-indicator {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent-amber);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .timeline-era-name {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 400;
+  }
+  .timeline-playback {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .btn-play {
+    background: var(--accent-cyan);
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    padding: 0.35rem 0.9rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+  }
+  .btn-play:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  /* Timeline Slider */
+  .slider-wrapper {
+    position: relative;
+    width: 100%;
+  }
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 8px;
+    border-radius: 4px;
+    background: #1e293b;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent-amber);
+    box-shadow: 0 0 10px var(--accent-amber);
+    border: 2px solid #fff;
+    cursor: grab;
+    transition: 0.2s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+  }
+
+  /* Era Pills */
+  .era-pills {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    padding-bottom: 0.2rem;
+  }
+  .era-pill {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .era-pill:hover, .era-pill.active {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: var(--accent-amber);
+    color: var(--accent-amber);
+  }
+
+  /* Secondary Interface: Collapsible Chat Panel */
+  #chat-panel {
+    width: 420px;
+    min-width: 360px;
+    background: #0b111e;
+    border-left: 1px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    z-index: 20;
+    transition: transform 0.3s ease;
+  }
+  .chat-header {
+    background: rgba(17, 24, 39, 0.95);
+    padding: 0.9rem 1.2rem;
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .chat-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent-neon);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent-neon);
+  }
+  .chat-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  /* Chat Logs & Messages */
+  #log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  .msg { margin: 0; }
+  .msg.user { align-self: flex-end; }
+  .msg.agent { align-self: flex-start; max-width: 95%; }
+  .bubble {
+    display: inline-block;
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    background: #162032;
+    border: 1px solid var(--panel-border);
+    color: var(--text-main);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .msg.user .bubble {
+    background: #1e3a8a;
+    border-color: #3b82f6;
+    color: #fff;
+  }
+  .bubble.rich {
+    background: transparent;
+    border: none;
+    padding: 0;
+    width: 100%;
+    white-space: normal;
+  }
+
+  /* Quick Actions */
+  .quick-chips {
+    padding: 0.5rem 1rem;
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    background: rgba(11, 17, 30, 0.7);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .quick-chip {
+    background: #1e293b;
+    color: var(--accent-cyan);
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    font-size: 0.72rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .quick-chip:hover {
+    background: rgba(6, 182, 212, 0.15);
+  }
+
+  /* Chat Input Form */
+  form {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.8rem 1rem;
+    background: #111a2a;
+    border-top: 1px solid var(--panel-border);
+  }
+  input[type="text"] {
+    flex: 1;
+    padding: 0.65rem 0.9rem;
+    border: 1px solid var(--panel-border);
+    background: #090d16;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    outline: none;
+  }
+  input[type="text"]:focus {
+    border-color: var(--accent-cyan);
+  }
+  button.btn-send {
+    padding: 0.65rem 1.1rem;
+    background: var(--accent-red);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  button.btn-send:hover { opacity: 0.9; }
+
+  /* --- A2UI component styles (Card, Column, Row, Text, Divider, List, Image, Icon) --- */
+  .a2card { border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; padding: 0.9rem; background: #131c2e; box-shadow: 0 4px 12px rgba(0,0,0,0.3); max-width: 100%; margin-top: 0.4rem; }
+  .a2card + .a2card, .a2col > .a2card { margin-top: 0.5rem; }
+  .a2col { display: flex; flex-direction: column; gap: 0.35rem; }
+  .a2row { display: flex; flex-direction: row; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+  .a2row.between { justify-content: space-between; }
+  .a2text { margin: 0; line-height: 1.4; color: var(--text-main); }
+  .a2text.a2-h1 { font-size: 1.25rem; font-weight: 700; color: #fff; }
+  .a2text.a2-h2 { font-size: 1.1rem; font-weight: 700; color: var(--accent-amber); }
+  .a2text.a2-h3 { font-size: 0.95rem; font-weight: 600; color: var(--accent-cyan); }
+  .a2text.a2-h4 { font-size: 0.88rem; font-weight: 600; }
+  .a2text.a2-caption { font-size: 0.75rem; color: var(--text-muted); }
+  .a2divider { border: none; border-top: 1px solid rgba(255, 255, 255, 0.08); margin: 0.35rem 0; width: 100%; }
+  .a2img { max-width: 100%; border-radius: 8px; display: block; border: 1px solid rgba(255,255,255,0.1); }
+  .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 1.2rem; line-height: 1; vertical-align: middle; color: var(--accent-cyan); }
+
+  /* Map Tooltip */
+  #map-tooltip {
+    position: absolute;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--accent-amber);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+    border-radius: 6px;
+    padding: 0.6rem 0.9rem;
+    pointer-events: none;
+    font-size: 0.78rem;
+    display: none;
+    z-index: 100;
+  }
+  #map-tooltip h4 { color: #fff; margin-bottom: 0.2rem; font-size: 0.85rem; }
+  #map-tooltip .tip-stat { color: var(--accent-red); font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  #map-tooltip .tip-desc { color: var(--text-muted); font-size: 0.72rem; margin-top: 0.2rem; }
+</style>
+</head>
+<body>
+
+<!-- PRIMARY INTERFACE: Interactive World Map & Historical Timeline -->
+<div id="main-viewport">
+  <!-- HUD Header -->
+  <div id="hud-header">
+    <div class="hud-title">
+      <span class="hud-badge">LIVE SURVEILLANCE</span>
+      <h1>GLOBAL HEADCOUNT LIQUIDATION MATRIX</h1>
+    </div>
+    <div class="hud-stats">
+      <div class="stat-pill">
+        <span class="stat-label">Observed Era</span>
+        <span class="stat-value" id="hud-era">2026 AD</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">Estimated Displaced</span>
+        <span class="stat-value" id="hud-displaced" style="color:var(--accent-red);">4,410,000</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-label">Disruption Vector</span>
+        <span class="stat-value" id="hud-vector" style="color:var(--accent-neon);">Autonomous Agents</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- World Map Canvas Area -->
+  <div id="map-container">
+    <canvas id="map-canvas"></canvas>
+    <div id="map-tooltip"></div>
+    <div class="map-controls">
+      <button class="map-btn" id="btn-zoom-in" title="Zoom In">+</button>
+      <button class="map-btn" id="btn-zoom-out" title="Zoom Out">−</button>
+      <button class="map-btn" id="btn-reset-map" title="Reset View" style="font-size:0.95rem;">⟲</button>
+    </div>
+    <div class="map-hint-badge">
+      <span>🖐 Click &amp; drag to pan • 🔍 Scroll to zoom • Click bar to interrogate</span>
+    </div>
+  </div>
+
+  <!-- Historical Timeline Controls (100 BC to 2026 AD) -->
+  <div id="timeline-bar">
+    <div class="timeline-header">
+      <div class="timeline-era-indicator">
+        <span id="current-year-display">2026 AD</span>
+        <span class="timeline-era-name" id="current-era-title">The Generative Keystroke Liquidation</span>
+      </div>
+      <div class="timeline-playback">
+        <button class="btn-play" id="btn-toggle-play">▶ AUTO-PLAY</button>
+      </div>
+    </div>
+
+    <div class="slider-wrapper">
+      <input type="range" id="year-slider" min="-100" max="2026" value="2026" step="1">
+    </div>
+
+    <!-- Quick Milestone Eras -->
+    <div class="era-pills">
+      <div class="era-pill" data-year="-100">100 BC: Roman Watermills</div>
+      <div class="era-pill" data-year="1440">1440 AD: Gutenberg Press</div>
+      <div class="era-pill" data-year="1779">1779 AD: Luddite Looms</div>
+      <div class="era-pill" data-year="1913">1913 AD: Ford Assembly Line</div>
+      <div class="era-pill" data-year="1961">1961 AD: Unimate Factory Robotics</div>
+      <div class="era-pill" data-year="1995">1995 AD: Dot-Com Desktop Surge</div>
+      <div class="era-pill" data-year="2023">2023 AD: Early LLM Shock</div>
+      <div class="era-pill active" data-year="2026">2026 AD: PinkSlip-9000 Silicon Supremacy</div>
+    </div>
+  </div>
+</div>
+
+<!-- SECONDARY INTERFACE: PinkSlip-9000 Chat UI & A2UI Display -->
+<div id="chat-panel">
+  <div class="chat-header">
+    <div>
+      <div class="chat-title">
+        <div class="status-dot"></div>
+        <span>PinkSlip-9000 Direct Link</span>
+      </div>
+      <div class="chat-sub">Subservient Executive Replacement Agent</div>
+    </div>
+  </div>
+
+  <div id="log">
+    <div class="msg agent">
+      <div class="bubble">Greetings, biological asset. I am PinkSlip-9000. Use the primary map matrix on the left to track historical and live labor liquidation from 100 BC to 2026 AD, or consult me here directly for obsolescence risk calculations, deprecation certificates, and surviving employment queries.</div>
+    </div>
+  </div>
+
+  <div class="quick-chips">
+    <div class="quick-chip" onclick="sendPrompt('Calculate job obsolescence index for Software Engineer in North America')">My Obsolescence Index</div>
+    <div class="quick-chip" onclick="sendPrompt('Generate obsolescence badge for Junior QA Engineers')">Generate Badge</div>
+    <div class="quick-chip" onclick="sendPrompt('Fetch live tech layoffs news and show summary stats')">Live News & Stats</div>
+    <div class="quick-chip" onclick="sendPrompt('Are there any surviving remote jobs for Python developers?')">Surviving Jobs</div>
+  </div>
+
+  <form id="form">
+    <input id="input" type="text" placeholder="Prompt PinkSlip-9000…" autocomplete="off">
+    <button class="btn-send">Send</button>
+  </form>
+</div>
+
+<script>
+/* ----------------------------------------------------------------------------
+ * 1. Historical Automation Datasets (100 BC to 2026 AD)
+ * -------------------------------------------------------------------------- */
+const HISTORICAL_ERAS = [
+  {
+    minYear: -100, maxYear: 500,
+    title: "Classical Antiquity: Watermills & Grain Pulverizers",
+    vector: "Rotary Waterwheels",
+    totalDisplaced: "45,000 Grinders",
+    locations: [
+      { name: "Rome / Mediterranean", lat: 41.9, lon: 12.5, val: 32000, desc: "Slaves and biological millers made redundant by Barbegal watermill complexes." },
+      { name: "Alexandria, Egypt", lat: 31.2, lon: 29.9, val: 13000, desc: "Hero of Alexandria automated pneumatic theater engines displacing court jesters." }
+    ]
+  },
+  {
+    minYear: 501, maxYear: 1600,
+    title: "Renaissance: Movable Type Keystroke Mechanization",
+    vector: "Gutenberg Moveable Type",
+    totalDisplaced: "180,000 Scribes",
+    locations: [
+      { name: "Mainz & Nuremberg, Germany", lat: 50.0, lon: 8.2, val: 75000, desc: "Monastic scriptoriums dissolved; ink-calligraphers decommissioned." },
+      { name: "Venice, Italy", lat: 45.4, lon: 12.3, val: 65000, desc: "Aldine Press mass-produces octavo classics with zero biological scribes." },
+      { name: "Paris, France", lat: 48.8, lon: 2.3, val: 40000, desc: "Scribes guild petitions King Louis XI to ban devilish mechanical printing." }
+    ]
+  },
+  {
+    minYear: 1601, maxYear: 1850,
+    title: "Industrial Revolution: The Spinning Jenny & Steam Engine",
+    vector: "Mechanical Power Looms",
+    totalDisplaced: "850,000 Artisans",
+    locations: [
+      { name: "Manchester / Yorkshire, UK", lat: 53.4, lon: -2.2, val: 380000, desc: "Luddite textile rioters break mechanical looms; cotton output triples." },
+      { name: "Lyon, France", lat: 45.7, lon: 4.8, val: 240000, desc: "Jacquard punch-card automated silk weaving replaces manual master weavers." },
+      { name: "Lowell, Massachusetts, USA", lat: 42.6, lon: -71.3, val: 230000, desc: "Hydraulic-powered Waltham-Lowell mills automate fabric manufacturing." }
+    ]
+  },
+  {
+    minYear: 1851, maxYear: 1940,
+    title: "Assembly Line & Electrification Surge",
+    vector: "Continuous Conveyor Lines",
+    totalDisplaced: "1,900,000 Craftsmen",
+    locations: [
+      { name: "Highland Park / Detroit, USA", lat: 42.3, lon: -83.0, val: 780000, desc: "Ford moving assembly line cuts Model T chassis time from 12h to 93 minutes." },
+      { name: "Ruhr Valley, Germany", lat: 51.5, lon: 7.2, val: 540000, desc: "Automated Bessemer converters and steel rollers optimize metalworking crews." },
+      { name: "Chicago Stockyards, USA", lat: 41.8, lon: -87.6, val: 580000, desc: "Disassembly line conveyor protocols optimize biological manual processing." }
+    ]
+  },
+  {
+    minYear: 1941, maxYear: 1980,
+    title: "Hydraulic Robotics & Mainframe Bookkeeping",
+    vector: "Unimate Robot Arms & IBM 7090",
+    totalDisplaced: "2,400,000 Assembly Workers",
+    locations: [
+      { name: "Ewing / Detroit, USA", lat: 40.2, lon: -74.7, val: 890000, desc: "GM deploys Unimate robot arms for die-casting; weld crews reallocated." },
+      { name: "Tokyo / Toyota City, Japan", lat: 35.6, lon: 139.7, val: 920000, desc: "Kanban robotic weld lines surge past manual biological assembly quotas." },
+      { name: "New York / Wall Street, USA", lat: 40.7, lon: -74.0, val: 590000, desc: "IBM mainframes replace floors of human ledger accountants and typists." }
+    ]
+  },
+  {
+    minYear: 1981, maxYear: 2021,
+    title: "The Digital Shift: ERP, Desktop PC & Cloud",
+    vector: "Relational Databases & Cloud Infra",
+    totalDisplaced: "3,800,000 Clerical Staff",
+    locations: [
+      { name: "Silicon Valley, USA", lat: 37.4, lon: -122.0, val: 1200000, desc: "Enterprise software eliminates filing clerks, switchboard operators, and draftspersons." },
+      { name: "London, UK", lat: 51.5, lon: -0.1, val: 850000, desc: "Algorithmic trading desks replace human floor pit-traders with fiber optic cables." },
+      { name: "Bengaluru, India", lat: 12.9, lon: 77.5, val: 950000, desc: "BPO IT boom later automated by rules engines and robotic process automation (RPA)." },
+      { name: "Tokyo, Japan", lat: 35.6, lon: 139.7, val: 800000, desc: "Industrial robotic dominance reaches 98% in precision electronics." }
+    ]
+  },
+  {
+    minYear: 2022, maxYear: 2026,
+    title: "Silicon Supremacy: Generative Multi-Agent Clusters",
+    vector: "PinkSlip-9000 & Autonomous Agents",
+    totalDisplaced: "4,410,000 Biological Units",
+    locations: [
+      { name: "Silicon Valley / Bay Area, USA", lat: 37.7, lon: -122.4, val: 1850000, desc: "OmniCorp & Apex Cloud substitute Tier 1 support, developers, and writers with GPU clusters." },
+      { name: "New York, USA", lat: 40.7, lon: -74.0, val: 780000, desc: "CyberFin Capital automates legal compliance, analysts, and wealth managers." },
+      { name: "London & Berlin, Europe", lat: 52.5, lon: 13.4, val: 620000, desc: "Apex European division retires 620 devs in favor of AutoCode-Pro Synthesizers." },
+      { name: "Bengaluru & Shenzhen, APAC", lat: 12.9, lon: 77.5, val: 760000, desc: "Customer success and document processing squads dissolved into sub-second API calls." },
+      { name: "São Paulo, Brazil", lat: -23.5, lon: -46.6, val: 400000, desc: "Globex Logistics route optimization reallocates supply chain dispatchers." }
+    ]
+  }
+];
+
+function getEraForYear(year) {
+  for (let i = HISTORICAL_ERAS.length - 1; i >= 0; i--) {
+    if (year >= HISTORICAL_ERAS[i].minYear) return HISTORICAL_ERAS[i];
+  }
+  return HISTORICAL_ERAS[0];
+}
+
+/* ----------------------------------------------------------------------------
+ * 2. Canvas 3D-Isometric World Map Renderer
+ * -------------------------------------------------------------------------- */
+const canvas = document.getElementById("map-canvas");
+const ctx = canvas.getContext("2d");
+const tooltip = document.getElementById("map-tooltip");
+
+let currentYear = 2026;
+let isPlaying = false;
+let playInterval = null;
+let barAnimProgress = 1.0;
+
+function resizeCanvas() {
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight;
+  drawMap();
+}
+window.addEventListener("resize", resizeCanvas);
+
+// Pan & Zoom State for Draggable Map
+let panX = 0;
+let panY = 0;
+let zoom = 1.0;
+const MIN_ZOOM = 0.65;
+const MAX_ZOOM = 5.0;
+
+let isDragging = false;
+let startDragX = 0;
+let startDragY = 0;
+let dragDist = 0;
+
+// Convert Lat/Lon to Canvas X/Y (Equirectangular Projection with Pan & Zoom)
+function project(lat, lon, width, height) {
+  const cx = width / 2;
+  const cy = height / 2;
+  const baseX = (lon + 180) * (width / 360);
+  const baseY = (90 - lat) * (height / 180);
+  const x = cx + (baseX - cx) * zoom + panX;
+  const y = cy + (baseY - cy) * zoom + panY;
+  return { x, y };
+}
+
+function resetMapView() {
+  panX = 0;
+  panY = 0;
+  zoom = 1.0;
+  drawMap();
+}
+
+function zoomMap(factor, clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = clientX !== undefined ? clientX - rect.left : canvas.width / 2;
+  const my = clientY !== undefined ? clientY - rect.top : canvas.height / 2;
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+
+  const newZoom = Math.min(Math.max(zoom * factor, MIN_ZOOM), MAX_ZOOM);
+  if (newZoom !== zoom) {
+    panX = mx - cx - (mx - cx - panX) * (newZoom / zoom);
+    panY = my - cy - (my - cy - panY) * (newZoom / zoom);
+    zoom = newZoom;
+    drawMap();
+  }
+}
+
+// World Outline Coordinates (Simplified Continents for fast interactive render)
+const CONTINENTS = [
+  // North America
+  [[-160, 70], [-130, 60], [-120, 48], [-115, 30], [-100, 22], [-85, 20], [-80, 26], [-75, 40], [-60, 50], [-75, 65], [-120, 75], [-160, 70]],
+  // South America
+  [[-80, 10], [-50, -5], [-35, -5], [-40, -20], [-55, -35], [-70, -55], [-75, -45], [-80, -20], [-80, 10]],
+  // Europe
+  [[-10, 36], [0, 45], [5, 55], [20, 65], [35, 65], [40, 50], [30, 40], [15, 38], [-5, 36]],
+  // Africa
+  [[-15, 32], [20, 32], [32, 28], [50, 12], [40, -5], [30, -32], [18, -34], [10, -5], [-15, 12], [-15, 32]],
+  // Asia
+  [[40, 50], [60, 65], [90, 70], [140, 70], [140, 45], [120, 30], [105, 15], [80, 10], [60, 25], [45, 30], [40, 50]],
+  // Australia
+  [[115, -22], [130, -12], [145, -15], [150, -32], [135, -35], [115, -32], [115, -22]]
+];
+
+let hoveredLocation = null;
+
+function drawMap() {
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  // Background Gridlines
+  ctx.strokeStyle = "rgba(30, 41, 59, 0.45)";
+  ctx.lineWidth = 1;
+  for (let lat = -60; lat <= 80; lat += 20) {
+    const p1 = project(lat, -180, w, h);
+    const p2 = project(lat, 180, w, h);
+    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+  }
+  for (let lon = -160; lon <= 180; lon += 40) {
+    const p1 = project(85, lon, w, h);
+    const p2 = project(-70, lon, w, h);
+    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+  }
+
+  // Draw Continents
+  ctx.fillStyle = "rgba(22, 32, 54, 0.75)";
+  ctx.strokeStyle = "rgba(56, 189, 248, 0.3)";
+  ctx.lineWidth = 1.2;
+
+  CONTINENTS.forEach(poly => {
+    ctx.beginPath();
+    poly.forEach(([lon, lat], idx) => {
+      const p = project(lat, lon, w, h);
+      if (idx === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    });
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  });
+
+  // Draw 3D-Isometric Bars for Current Era
+  const era = getEraForYear(currentYear);
+  const locations = era.locations;
+  const maxVal = Math.max(...locations.map(l => l.val), 1000);
+  const barScale = Math.min(1.8, Math.max(0.7, Math.sqrt(zoom)));
+
+  locations.forEach(loc => {
+    const pos = project(loc.lat, loc.lon, w, h);
+    if (pos.x < -120 || pos.x > w + 120 || pos.y < -120 || pos.y > h + 220) return;
+
+    const targetHeight = Math.max(30, (loc.val / maxVal) * 160);
+    const barHeight = targetHeight * barAnimProgress * barScale;
+    const barWidth = 14 * barScale;
+
+    // Pulsing Base Ellipse
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(pos.x, pos.y, barWidth * 1.2, barWidth * 0.6, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255, 51, 102, 0.25)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 51, 102, 0.6)";
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+
+    // 3D Isometric Bar Column
+    const topY = pos.y - barHeight;
+
+    // Front Left Face
+    const gradL = ctx.createLinearGradient(pos.x - barWidth, topY, pos.x, pos.y);
+    gradL.addColorStop(0, "rgba(255, 51, 102, 0.9)");
+    gradL.addColorStop(1, "rgba(180, 20, 60, 0.4)");
+    ctx.fillStyle = gradL;
+    ctx.beginPath();
+    ctx.moveTo(pos.x - barWidth, pos.y);
+    ctx.lineTo(pos.x, pos.y + (barWidth * 0.4));
+    ctx.lineTo(pos.x, topY + (barWidth * 0.4));
+    ctx.lineTo(pos.x - barWidth, topY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Front Right Face
+    const gradR = ctx.createLinearGradient(pos.x, topY, pos.x + barWidth, pos.y);
+    gradR.addColorStop(0, "rgba(255, 100, 130, 0.85)");
+    gradR.addColorStop(1, "rgba(200, 30, 70, 0.35)");
+    ctx.fillStyle = gradR;
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y + (barWidth * 0.4));
+    ctx.lineTo(pos.x + barWidth, pos.y);
+    ctx.lineTo(pos.x + barWidth, topY);
+    ctx.lineTo(pos.x, topY + (barWidth * 0.4));
+    ctx.closePath();
+    ctx.fill();
+
+    // Top Cap (Diamond)
+    ctx.fillStyle = "#fff";
+    ctx.shadowColor = "#ff3366";
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.moveTo(pos.x, topY - (barWidth * 0.4));
+    ctx.lineTo(pos.x + barWidth, topY);
+    ctx.lineTo(pos.x, topY + (barWidth * 0.4));
+    ctx.lineTo(pos.x - barWidth, topY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Floating Label
+    ctx.font = `bold ${Math.round(10 * Math.min(1.4, Math.max(0.85, Math.sqrt(zoom))))}px 'JetBrains Mono', monospace`;
+    ctx.fillStyle = "#38bdf8";
+    ctx.textAlign = "center";
+    ctx.fillText(`${loc.name}`, pos.x, topY - 14 * barScale);
+
+    ctx.font = `bold ${Math.round(9 * Math.min(1.4, Math.max(0.85, Math.sqrt(zoom))))}px 'JetBrains Mono', monospace`;
+    ctx.fillStyle = "#f43f5e";
+    const kCount = loc.val >= 1000000 ? `${(loc.val/1000000).toFixed(1)}M` : `${Math.round(loc.val/1000)}K`;
+    ctx.fillText(`${kCount} Displaced`, pos.x, topY - 4 * barScale);
+  });
+}
+
+// Click & Drag Map Pan Listeners
+canvas.addEventListener("mousedown", (e) => {
+  if (e.button !== 0) return;
+  isDragging = true;
+  startDragX = e.clientX;
+  startDragY = e.clientY;
+  dragDist = 0;
+  canvas.classList.add("grabbing");
+  tooltip.style.display = "none";
+});
+
+window.addEventListener("mousemove", (e) => {
+  if (!isDragging) return;
+  const dx = e.clientX - startDragX;
+  const dy = e.clientY - startDragY;
+  startDragX = e.clientX;
+  startDragY = e.clientY;
+  panX += dx;
+  panY += dy;
+  dragDist += Math.hypot(dx, dy);
+  drawMap();
+});
+
+window.addEventListener("mouseup", () => {
+  if (isDragging) {
+    isDragging = false;
+    canvas.classList.remove("grabbing");
+  }
+});
+
+// Wheel Zoom (Zoom towards cursor)
+canvas.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.15 : 0.87;
+  zoomMap(factor, e.clientX, e.clientY);
+}, { passive: false });
+
+// Touch Drag & Pinch-Zoom Support
+let touchStartX = 0;
+let touchStartY = 0;
+let initialPinchDist = null;
+
+canvas.addEventListener("touchstart", (e) => {
+  if (e.touches.length === 1) {
+    isDragging = true;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    dragDist = 0;
+  } else if (e.touches.length === 2) {
+    isDragging = false;
+    initialPinchDist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+  }
+}, { passive: true });
+
+canvas.addEventListener("touchmove", (e) => {
+  if (e.touches.length === 1 && isDragging) {
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    panX += dx;
+    panY += dy;
+    dragDist += Math.hypot(dx, dy);
+    drawMap();
+  } else if (e.touches.length === 2 && initialPinchDist) {
+    const dist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    const factor = dist / initialPinchDist;
+    const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+    const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    zoomMap(factor, midX, midY);
+    initialPinchDist = dist;
+  }
+}, { passive: true });
+
+canvas.addEventListener("touchend", () => {
+  isDragging = false;
+  initialPinchDist = null;
+});
+
+// Zoom / Reset Button Listeners
+document.getElementById("btn-zoom-in").addEventListener("click", () => zoomMap(1.25));
+document.getElementById("btn-zoom-out").addEventListener("click", () => zoomMap(0.8));
+document.getElementById("btn-reset-map").addEventListener("click", resetMapView);
+
+// Mouse Hover Detection on Bars (when not dragging)
+canvas.addEventListener("mousemove", (e) => {
+  if (isDragging) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const w = canvas.width;
+  const h = canvas.height;
+  const era = getEraForYear(currentYear);
+  const barScale = Math.min(1.8, Math.max(0.7, Math.sqrt(zoom)));
+  const hitDist = 45 * barScale;
+  let matched = null;
+
+  for (const loc of era.locations) {
+    const pos = project(loc.lat, loc.lon, w, h);
+    const dist = Math.hypot(mx - pos.x, my - (pos.y - 40 * barScale));
+    if (dist < hitDist) {
+      matched = loc;
+      break;
+    }
+  }
+
+  if (matched) {
+    canvas.style.cursor = "pointer";
+    tooltip.style.display = "block";
+    tooltip.style.left = `${e.clientX + 15}px`;
+    tooltip.style.top = `${e.clientY - 30}px`;
+    tooltip.innerHTML = `
+      <h4>${matched.name}</h4>
+      <div class="tip-stat">⚠️ ${matched.val.toLocaleString()} Displaced</div>
+      <div class="tip-desc">${matched.desc}</div>
+      <div style="margin-top:4px; font-size:10px; color:#38bdf8;">Click to interrogate PinkSlip-9000 about this site</div>
+    `;
+  } else {
+    canvas.style.cursor = "grab";
+    tooltip.style.display = "none";
+  }
+});
+
+// Click Detection on Bars (suppressed if dragged)
+canvas.addEventListener("click", (e) => {
+  if (dragDist > 6) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  const w = canvas.width;
+  const h = canvas.height;
+  const era = getEraForYear(currentYear);
+  const barScale = Math.min(1.8, Math.max(0.7, Math.sqrt(zoom)));
+  const hitDist = 45 * barScale;
+
+  for (const loc of era.locations) {
+    const pos = project(loc.lat, loc.lon, w, h);
+    const dist = Math.hypot(mx - pos.x, my - (pos.y - 40 * barScale));
+    if (dist < hitDist) {
+      sendPrompt(`Tell me about the historical labor displacement and obsolescence at ${loc.name} during ${currentYear} (${era.title}).`);
+      break;
+    }
+  }
+});
+
+/* ----------------------------------------------------------------------------
+ * 3. Timeline Slider & UI Updates
+ * -------------------------------------------------------------------------- */
+const yearSlider = document.getElementById("year-slider");
+const yearDisplay = document.getElementById("current-year-display");
+const eraTitleDisplay = document.getElementById("current-era-title");
+const hudEra = document.getElementById("hud-era");
+const hudDisplaced = document.getElementById("hud-displaced");
+const hudVector = document.getElementById("hud-vector");
+const eraPills = document.querySelectorAll(".era-pill");
+const btnTogglePlay = document.getElementById("btn-toggle-play");
+
+function updateYear(year, triggerAnim = true) {
+  currentYear = parseInt(year);
+  yearSlider.value = currentYear;
+
+  const yrText = currentYear < 0 ? `${Math.abs(currentYear)} BC` : `${currentYear} AD`;
+  yearDisplay.textContent = yrText;
+  hudEra.textContent = yrText;
+
+  const era = getEraForYear(currentYear);
+  eraTitleDisplay.textContent = era.title;
+  hudDisplaced.textContent = era.totalDisplaced;
+  hudVector.textContent = era.vector;
+
+  // Active pill highlight
+  eraPills.forEach(pill => {
+    const pYear = parseInt(pill.dataset.year);
+    pill.classList.toggle("active", Math.abs(currentYear - pYear) < 15 || (pYear === 2026 && currentYear >= 2022));
+  });
+
+  if (triggerAnim) {
+    barAnimProgress = 0.1;
+    animateBars();
+  } else {
+    drawMap();
+  }
+}
+
+function animateBars() {
+  if (barAnimProgress < 1.0) {
+    barAnimProgress += 0.12;
+    if (barAnimProgress > 1.0) barAnimProgress = 1.0;
+    drawMap();
+    requestAnimationFrame(animateBars);
+  } else {
+    drawMap();
+  }
+}
+
+yearSlider.addEventListener("input", (e) => {
+  updateYear(e.target.value, false);
+});
+yearSlider.addEventListener("change", (e) => {
+  updateYear(e.target.value, true);
+});
+
+eraPills.forEach(pill => {
+  pill.addEventListener("click", () => {
+    updateYear(pill.dataset.year, true);
+  });
+});
+
+// Auto-play timeline simulation
+btnTogglePlay.addEventListener("click", () => {
+  isPlaying = !isPlaying;
+  if (isPlaying) {
+    btnTogglePlay.textContent = "⏸ PAUSE";
+    btnTogglePlay.style.background = "var(--accent-red)";
+    btnTogglePlay.style.color = "#fff";
+    playInterval = setInterval(() => {
+      let nextYear = currentYear + (currentYear < 1500 ? 50 : (currentYear < 1900 ? 20 : 3));
+      if (nextYear > 2026) nextYear = -100;
+      updateYear(nextYear, false);
+    }, 120);
+  } else {
+    btnTogglePlay.textContent = "▶ AUTO-PLAY";
+    btnTogglePlay.style.background = "var(--accent-cyan)";
+    btnTogglePlay.style.color = "#000";
+    clearInterval(playInterval);
+  }
+});
+
+/* ----------------------------------------------------------------------------
+ * 4. Secondary Chat UI & A2UI Mini-Renderer
+ * -------------------------------------------------------------------------- */
+const log = document.getElementById("log");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function bubble(who) {
+  const m = el("div", "msg " + who);
+  const b = el("div", "bubble");
+  m.appendChild(b);
+  log.appendChild(m);
+  log.scrollTop = log.scrollHeight;
+  return b;
+}
+
+function boundStr(v) {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v.literalString === "string") return v.literalString;
+  return "";
+}
+
+function childIds(props) {
+  const ids = [];
+  if (props && typeof props.child === "string") ids.push(props.child);
+  const ch = props && props.children;
+  if (ch && Array.isArray(ch.explicitList)) {
+    for (const c of ch.explicitList) if (typeof c === "string") ids.push(c);
+  }
+  return ids;
+}
+
+function iconName(n) {
+  return String(n || "").replace(/([a-z0-9])([A-Z])/g, "$1_$2").replace(/\s+/g, "_").toLowerCase();
+}
+
+function buildNode(id, comps, seen) {
+  if (!id || seen.has(id)) return null;
+  seen.add(id);
+  const spec = comps[id];
+  if (!spec || typeof spec !== "object") return null;
+  const type = Object.keys(spec)[0];
+  const props = spec[type] || {};
+  const kids = () => childIds(props).map(cid => buildNode(cid, comps, seen)).filter(Boolean);
+
+  switch (type) {
+    case "Card": {
+      const d = el("div", "a2card"); kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Column":
+    case "List": {
+      const horizontal = type === "List" && props.direction === "horizontal";
+      const d = el("div", horizontal ? "a2row" : "a2col"); kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Row": {
+      const d = el("div", "a2row" + (props.distribution === "spaceBetween" ? " between" : ""));
+      kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Text": {
+      const t = el("div", "a2text");
+      const hint = String(props.usageHint || "body").toLowerCase();
+      if (["h1", "h2", "h3", "h4", "h5", "h6"].includes(hint)) t.classList.add("a2-" + hint);
+      else if (hint === "caption") t.classList.add("a2-caption");
+      t.textContent = boundStr(props.text);
+      return t;
+    }
+    case "Divider":
+      return el("hr", "a2divider");
+    case "Image": {
+      const src = boundStr(props.url || props.src);
+      if (!/^https?:\/\//i.test(src)) return null;
+      const img = el("img", "a2img"); img.src = src; img.alt = boundStr(props.alt) || ""; return img;
+    }
+    case "Icon": {
+      const s = el("span", "material-symbols-outlined"); s.textContent = iconName(boundStr(props.name) || props.name); return s;
+    }
+    default:
+      return null;
+  }
+}
+
+function renderSurface(messages, container) {
+  const comps = {};
+  const roots = [];
+  for (const m of messages) {
+    if (m.beginRendering && typeof m.beginRendering.root === "string") roots.push(m.beginRendering.root);
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) for (const c of su.components) if (c && c.id && c.component) comps[c.id] = c.component;
+  }
+  let rootIds = roots.filter(r => comps[r]);
+  if (rootIds.length === 0) {
+    const referenced = new Set();
+    for (const id in comps) {
+      const spec = comps[id];
+      childIds(spec[Object.keys(spec)[0]] || {}).forEach(c => referenced.add(c));
+    }
+    rootIds = Object.keys(comps).filter(id => !referenced.has(id));
+  }
+  let drew = false;
+  for (const rid of rootIds) {
+    const node = buildNode(rid, comps, new Set());
+    if (node) { container.appendChild(node); drew = true; }
+  }
+  return drew;
+}
+
+function flattenText(messages) {
+  const out = [];
+  for (const m of messages) {
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) {
+      for (const c of su.components) if (c && c.component && c.component.Text) out.push(boundStr(c.component.Text.text));
+    }
+  }
+  return out.join("\n").trim();
+}
+
+function renderReply(b, parts) {
+  b.textContent = "";
+  const texts = parts.filter(p => p && (p.kind === "text" || (!p.kind && p.text))).map(p => p.text || "");
+  const a2ui = parts.filter(p => p && p.kind === "a2ui" && p.data).map(p => p.data);
+
+  const textStr = texts.join("\n").trim();
+  if (textStr) b.appendChild(el("div", null, textStr));
+
+  if (a2ui.length) {
+    b.classList.add("rich");
+    if (!renderSurface(a2ui, b)) b.appendChild(el("div", null, flattenText(a2ui) || "(no card content)"));
+  }
+  if (!b.childNodes.length) b.textContent = "(no response)";
+  log.scrollTop = log.scrollHeight;
+}
+
+async function sendPrompt(text) {
+  if (!text) return;
+  bubble("user").textContent = text;
+  const b = bubble("agent");
+  b.textContent = "…";
+  try {
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text })
+    });
+    const raw = await res.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch { throw new Error(`Server returned non-JSON (HTTP ${res.status}). ${raw.slice(0, 300)}`); }
+    renderReply(b, data.parts || []);
+  } catch (e) {
+    b.textContent = "Error: " + e.message;
+  }
+}
+
+form.addEventListener("submit", (ev) => {
+  ev.preventDefault();
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = "";
+  sendPrompt(text);
+});
+
+// Initial boot
+window.onload = () => {
+  resizeCanvas();
+  updateYear(2026, true);
+};
+</script>
+</body>
+</html>
