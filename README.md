@@ -1,3 +1,5 @@
+🌐 **Live Deployed App:** https://pinkslip-9000-frontend-269285378754.us-east1.run.app
+
 # 📉 PinkSlip-9000: The AI Automation Apocalypse Dashboard
 
 > *A satirical dashboard and analytics agent tracking and visualizing AI-driven workforce layoffs across customizable regions and infinite time dials with corporate downsizing excuses, doom-gauges, and AI replacement metrics.*
